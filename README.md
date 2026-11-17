@@ -15,18 +15,20 @@ Proyecto de Modelado Ágil de Software (ULEAM, 2026-2). Todos los datos son fict
 - pip
 
 ## Cómo ejecutar
-bash
+
+```bash
 git clone https://github.com/kristtiluv/eventovivo.git
 cd eventovivo
 python -m venv .venv
 source .venv/bin/activate      # En Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-
+```
 
 ## Cómo correr las pruebas
-bash
-python -m pytest
 
+```bash
+python -m pytest
+```
 
 ## Estrategia de ramas
 - `main`: rama estable. Solo recibe código que ya pasó pruebas y revisión.
