@@ -1,4 +1,4 @@
-from eventovivo.modelos import Sesion
+from eventovivo.modelos import Sesion, buscar_sesion
 
 
 def inscribir_sesion(
@@ -8,9 +8,7 @@ def inscribir_sesion(
     sesion_id: int,
 ) -> str:
     """HU-02: inscribe a un participante en una sesión si hay cupo disponible."""
-    sesion = next((s for s in sesiones if s.id == sesion_id), None)
-    if sesion is None:
-        raise ValueError(f"No existe una sesión con id {sesion_id}.")
+    sesion = buscar_sesion(sesiones, sesion_id)
 
     inscritos = inscritos_por_sesion.setdefault(sesion_id, set())
     if participante in inscritos:

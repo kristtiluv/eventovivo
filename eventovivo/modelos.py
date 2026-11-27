@@ -11,3 +11,9 @@ class Sesion:
     inicio: datetime
     fin: datetime
     ubicacion: str
+
+def buscar_sesion(sesiones: list[Sesion], sesion_id: int) -> Sesion:
+    sesion = next((s for s in sesiones if s.id == sesion_id), None)
+    if sesion is None:
+        raise ValueError(f"No existe una sesión con id {sesion_id}.")
+    return sesion
