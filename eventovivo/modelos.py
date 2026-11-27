@@ -17,3 +17,6 @@ def buscar_sesion(sesiones: list[Sesion], sesion_id: int) -> Sesion:
     if sesion is None:
         raise ValueError(f"No existe una sesión con id {sesion_id}.")
     return sesion
+
+def tiene_cupo(sesion: Sesion) -> bool:
+    return sesion.cupo > 0
