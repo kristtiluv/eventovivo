@@ -1,4 +1,4 @@
-from eventovivo.modelos import Sesion
+from eventovivo.modelos import Sesion, buscar_sesion
 
 
 def cancelar_inscripcion(
@@ -8,10 +8,8 @@ def cancelar_inscripcion(
     sesion_id: int,
 ) -> str:
     """HU-09: cancela la inscripción de un participante y libera su cupo."""
-    sesion = next((s for s in sesiones if s.id == sesion_id), None)
-    if sesion is None:
-        raise ValueError(f"No existe una sesión con id {sesion_id}.")
-
+    sesion = buscar_sesion(sesiones, sesion_id)
+    
     inscritos = inscritos_por_sesion.setdefault(sesion_id, set())
     if participante not in inscritos:
         return f"No estás inscrito en '{sesion.titulo}'."
