@@ -36,5 +36,5 @@ python -m pytest
 - Cada rama se une a `main` con un pull request, revisado por una compañera antes de aceptarlo.
 
 ## Enlaces
-- Tablero Kanban: [pegar enlace]
+- Tablero Kanban: https://trello.com/b/jqtUCeM0/eventovivokanban
 - Plan de planificación ágil: https://docs.google.com/document/d/1met2NxWbBhTYC9894s30nfDU31PO0Kww3q4lek4cMlk/edit?usp=sharing
