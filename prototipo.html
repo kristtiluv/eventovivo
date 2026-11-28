@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventoVivo - Prototipo Multipantalla (Tema 11)</title>
+    <style>
+        :root {
+            --bg-base: #090d16;
+            --surface: #131d31;
+            --surface-hover: #1b2845;
+            --border: #223354;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --radius: 12px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-nav {
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand-icon {
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: white; width: 36px; height: 36px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem;
+        }
+        .brand-text span { font-size: 0.95rem; font-weight: 600; color: #fff; display: block; }
+        .brand-text small { font-size: 0.75rem; color: var(--text-muted); display: block; }
+
+        .badge-meta {
+            background-color: rgba(99, 102, 241, 0.15);
+            color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 0.35rem 0.85rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+        }
+
+        .main-container {
+            max-width: 800px;
+            margin: 2.5rem auto;
+            padding: 0 1.5rem;
+            width: 100%;
+            flex-grow: 1;
+        }
+
+        .screen-card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .screen-card.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        .header-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+
+        .session-item {
+            background-color: rgba(9, 13, 22, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .session-item:hover {
+            border-color: var(--primary);
+            background-color: var(--surface-hover);
+        }
+
+        .session-row { display: flex; justify-content: space-between; align-items: flex-start; }
+        .session-name { font-size: 0.95rem; font-weight: 600; color: #fff; margin-top: 4px; }
+        .session-info { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+        .tag {
+            font-size: 0.7rem; font-weight: 600; padding: 0.25rem 0.65rem; border-radius: 6px; display: inline-block;
+        }
+        .tag-green { background-color: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .tag-amber { background-color: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .form-field { margin-bottom: 1.25rem; }
+        .form-label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .form-input {
+            width: 100%; padding: 0.75rem 1rem; background-color: var(--bg-base);
+            border: 1px solid var(--border); border-radius: 8px; color: white; font-size: 0.9rem;
+        }
+        .form-input:focus { outline: none; border-color: var(--primary); }
+
+        .checkbox-box {
+            display: flex; align-items: center; gap: 10px; background-color: rgba(9, 13, 22, 0.5);
+            border: 1px solid var(--border); padding: 0.85rem 1rem; border-radius: 8px; cursor: pointer; margin-bottom: 1.25rem;
+        }
+        .checkbox-box input { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
+        .checkbox-box label { font-size: 0.8rem; color: var(--text-muted); cursor: pointer; margin: 0; }
+
+        /* Banner de error visible en pantalla (Mejora HU-03) */
+        .conflict-banner {
+            display: none;
+            background-color: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.45);
+            border-radius: 10px;
+            padding: 0.9rem 1rem;
+            margin-bottom: 1.25rem;
+            color: #fca5a5;
+            font-size: 0.82rem;
+            line-height: 1.45;
+        }
+        .conflict-banner.show { display: block; }
+        .conflict-banner strong { color: #fecaca; display: block; margin-bottom: 0.2rem; }
+
+        .btn-main {
+            width: 100%; background-color: var(--primary); color: white; border: none;
+            padding: 0.85rem; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer;
+            transition: background-color 0.2s; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+        }
+        .btn-main:hover { background-color: var(--primary-hover); }
+
+        .btn-secondary {
+            background-color: var(--border); color: var(--text-main); margin-top: 0.75rem;
+        }
+        .btn-secondary:hover { background-color: #334155; }
+
+        .error-text { color: var(--accent-red); font-size: 0.75rem; margin-top: 0.3rem; display: none; }
+        .error-text.show { display: block; }
+
+        .loading-screen {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+        .spinner-large {
+            width: 45px; height: 45px; border: 4px solid rgba(99, 102, 241, 0.2);
+            border-top-color: var(--primary); border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin: 0 auto 1.5rem auto;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .success-screen { text-align: center; }
+        .qr-card {
+            background: white; padding: 1.25rem; border-radius: 12px; display: inline-block; margin: 1.25rem 0;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .ai-footer-log {
+            margin-top: 2rem;
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 10px; padding: 1rem; font-size: 0.75rem; color: var(--text-muted);
+        }
+        .ai-footer-log strong { color: #a855f7; display: block; margin-bottom: 0.2rem; }
+
+        footer {
+            background-color: var(--surface); border-top: 1px solid var(--border);
+            text-align: center; padding: 1rem; font-size: 0.75rem; color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-nav">
+        <div class="brand">
+            <div class="brand-icon">EV</div>
+            <div class="brand-text">
+                <span>EventoVivo · Prototipo Multipantalla</span>
+                <small>Flujo interactivo paso a paso (Tema 11)</small>
+            </div>
+        </div>
+        <div class="badge-meta">MVP Activo</div>
+    </header>
+
+    <main class="main-container">
+        
+        <!-- PANTALLA 1: AGENDA (HU-01) -->
+        <div class="screen-card active" id="pantalla-1">
+            <div class="header-title">📅 Selecciona una Sesión del Evento (HU-01)</div>
+            <div class="header-desc">Elige una de las actividades disponibles para iniciar el flujo interactivo de inscripción y validación de cupos.</div>
+
+            <div class="session-item" onclick="irPantallaInscripcion('Taller de Python Avanzado', 'Lab 3', 'Viernes, 14:00 - 16:00', false)">
+                <div class="session-row">
+                    <div>
+                        <span class="tag tag-green">Disponible (Cupos Libres)</span>
+                        <div class="session-name">Taller de Python Avanzado</div>
+                        <div class="session-info">🕒 Viernes, 14:00 - 16:00 &nbsp;|&nbsp; 📍 Lab 3 (Facultad de Ingeniería)</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong style="color: #34d399; font-size: 0.85rem;">18/20</strong>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">Cupos OK</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="session-item" onclick="irPantallaInscripcion('Hackatón de Innovación 2026', 'Auditorio Principal', 'Sábado, 09:00 - 13:00', true)">
+                <div class="session-row">
+                    <div>
+                        <span class="tag tag-amber">Sesión Llena · Lista de Espera (HU-04)</span>
+                        <div class="session-name">Hackatón de Innovación 2026</div>
+                        <div class="session-info">🕒 Sábado, 09:00 - 13:00 &nbsp;|&nbsp; 📍 Auditorio Principal</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <strong style="color: #fbbf24; font-size: 0.85rem;">15/15</strong>
+                        <div style="font-size: 0.7rem; color: var(--accent-amber);">Entrar a Espera</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 2: FORMULARIO DE DATOS -->
+        <div class="screen-card" id="pantalla-2">
+            <div class="header-title">✍️ Datos del Participante</div>
+            <div class="header-desc" id="infoSesionElegida">Estás a un paso de confirmar tu registro en la sesión seleccionada.</div>
+
+            <form onsubmit="validarYPasarCarga(event)">
+                <div class="form-field">
+                    <label class="form-label">Nombre Completo</label>
+                    <input type="text" id="nombreInput" class="form-input" placeholder="Ej. Mikaela Bailón">
+                    <div id="errorNombre" class="error-text">⚠️ Por favor, ingresa tu nombre completo.</div>
+                </div>
+
+                <div class="checkbox-box">
+                    <input type="checkbox" id="checkChoque" onchange="ocultarBannerChoque()">
+                    <label for="checkChoque">Simular Choque de Horario (HU-03) — Ya tengo otra sesión cruzada</label>
+                </div>
+
+                <div id="bannerChoque" class="conflict-banner">
+                    <strong>⚠️ Inscripción bloqueada por choque de horario (HU-03)</strong>
+                    <span id="detalleChoqueTexto"></span>
+                </div>
+
+                <button type="submit" class="btn-main">Siguiente: Validar Reglas TDD</button>
+                <button type="button" class="btn-main btn-secondary" onclick="cambiarPantalla('pantalla-1')">← Volver a la Agenda</button>
+            </form>
+        </div>
+
+        <!-- PANTALLA 3: PROCESAMIENTO / CARGA ÁGIL -->
+        <div class="screen-card" id="pantalla-3">
+            <div class="loading-screen">
+                <div class="spinner-large"></div>
+                <div style="font-size: 1rem; font-weight: 600; color: #fff; margin-bottom: 0.5rem;">Validando reglas de negocio con motor ágil...</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Comprobando disponibilidad, exclusividad de cupos y restricciones de horario.</div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 4: RESULTADO ÉXITO / CREDENCIAL QR (HU-06) -->
+        <div class="screen-card" id="pantalla-4">
+            <div class="success-screen">
+                <span class="tag tag-green" style="margin-bottom: 0.75rem; padding: 0.35rem 1rem;">¡Proceso Exitoso! (HU-02 / HU-06)</span>
+                
+                <div class="qr-card">
+                    <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#0f172a" stroke-width="2">
+                        <path d="M3 3h6v6H3zM15 3h6v6h-6zM3 15h6v6H3z"/>
+                        <path d="M14 14h2v2h-2zM18 14h3v3h-3zM14 18h3v3h-3zM18 18h2v2h-2z"/>
+                        <path d="M12 3v18M3 12h18"/>
+                    </svg>
+                </div>
+
+                <div id="textoResultadoFinal" style="font-size: 0.9rem; color: #fff; font-weight: 500; margin-bottom: 0.5rem;"></div>
+                <div id="subtextoResultadoFinal" style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1.5rem;">Presenta esta credencial digital en el ingreso al evento (Control de asistencia única).</div>
+
+                <button type="button" class="btn-main" onclick="reiniciarPrototipo()">Finalizar y Volver al Inicio</button>
+            </div>
+        </div>
+
+        <div class="ai-footer-log">
+            <strong>🤖 Bitácora de Verificación Crítica (Tema 11)</strong>
+            <span>La IA propuso un flujo lineal básico. El equipo lo rediseñó en un enfoque multipantalla paso a paso para controlar explícitamente los estados vacíos, las pantallas de carga y los mensajes de error ante colisiones de horario (HU-03) y listas de espera (HU-04).</span>
+        </div>
+
+    </main>
+
+    <footer>
+        Modelado Ágil de Software · IS-505 · ULEAM 2026-2 · Grupo: Mikaela Bailón, Alexis Lucas, Kristin Morales, Yomaira Valarezo
+    </footer>
+
+    <script>
+        let sesionElegidaGlobal = "";
+        let horarioElegidoGlobal = "";
+        let esEsperaGlobal = false;
+        let nombreUsuarioGlobal = "";
+
+        function cambiarPantalla(idPantalla) {
+            document.querySelectorAll('.screen-card').forEach(el => el.classList.remove('active'));
+            document.getElementById(idPantalla).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function ocultarBannerChoque() {
+            document.getElementById('bannerChoque').classList.remove('show');
+        }
+
+        function irPantallaInscripcion(nombre, aula, horario, esLlena) {
+            sesionElegidaGlobal = `${nombre} (${aula})`;
+            horarioElegidoGlobal = horario;
+            esEsperaGlobal = esLlena;
+            ocultarBannerChoque();
+            document.getElementById('infoSesionElegida').innerHTML = `Inscribiéndote en: <strong style="color:#818cf8;">${sesionElegidaGlobal}</strong> · ${horario} ${esLlena ? '(Sesión Llena - Entrarás a Lista de Espera)' : ''}`;
+            cambiarPantalla('pantalla-2');
+        }
+
+        function validarYPasarCarga(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('nombreInput').value.trim();
+            const errorDiv = document.getElementById('errorNombre');
+            const choque = document.getElementById('checkChoque').checked;
+            const bannerChoque = document.getElementById('bannerChoque');
+            const detalleChoque = document.getElementById('detalleChoqueTexto');
+
+            if (nombre === "") {
+                errorDiv.classList.add('show');
+                return;
+            }
+            errorDiv.classList.remove('show');
+            nombreUsuarioGlobal = nombre;
+
+            if (choque) {
+                const sesionConflicto = esEsperaGlobal
+                    ? "Taller de Arquitectura Ágil (Sábado, 09:00 - 13:00)"
+                    : "Taller de Bases de Datos (Viernes, 14:00 - 16:00)";
+                detalleChoque.textContent = `Tu intento en "${sesionElegidaGlobal}" (${horarioElegidoGlobal}) se superpone con "${sesionConflicto}". No se registró la inscripción.`;
+                bannerChoque.classList.add('show');
+                return;
+            }
+
+            ocultarBannerChoque();
+            cambiarPantalla('pantalla-3');
+
+            setTimeout(() => {
+                let mensajeFinalHtml = `Credencial QR emitida para <strong style="color:#818cf8;">${nombreUsuarioGlobal}</strong> en <strong>${sesionElegidaGlobal}</strong>.`;
+                let subtextoHtml = "Presenta esta credencial digital en el ingreso al evento (Control de asistencia única).";
+
+                if (esEsperaGlobal) {
+                    mensajeFinalHtml = `Te has inscrito en la <strong style="color:#fbbf24;">Lista de Espera (Posición #1)</strong> para <strong>${sesionElegidaGlobal}</strong>, ${nombreUsuarioGlobal}.`;
+                    subtextoHtml = "Si un participante inscrito cancela su cupo, avanzarás automáticamente en la lista de espera según el orden de llegada (HU-05).";
+                }
+
+                document.getElementById('textoResultadoFinal').innerHTML = mensajeFinalHtml;
+                document.getElementById('subtextoResultadoFinal').textContent = subtextoHtml;
+                cambiarPantalla('pantalla-4');
+            }, 1200);
+        }
+
+        function reiniciarPrototipo() {
+            document.getElementById('nombreInput').value = "";
+            document.getElementById('checkChoque').checked = false;
+            document.getElementById('errorNombre').classList.remove('show');
+            ocultarBannerChoque();
+            sesionElegidaGlobal = "";
+            horarioElegidoGlobal = "";
+            esEsperaGlobal = false;
+            nombreUsuarioGlobal = "";
+            cambiarPantalla('pantalla-1');
+        }
+    </script>
+</body>
+</html>
